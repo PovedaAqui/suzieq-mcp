@@ -4,7 +4,11 @@ This project provides a Model Context Protocol (MCP) server that allows language
 
 ## Overview
 
-The server exposes SuzieQ's `show` commands as an MCP tool (`run_suzieq_show`). This enables clients (like Claude Desktop) to query various network state tables (e.g., interfaces, BGP, routes) and apply filters, retrieving the results directly from your SuzieQ instance.
+The server exposes SuzieQ's commands as MCP tools:
+- `run_suzieq_show`: Access the 'show' command to query detailed network state tables
+- `run_suzieq_summarize`: Access the 'summarize' command to get aggregated statistics and summaries
+
+These tools enable clients (like Claude Desktop) to query various network state tables (e.g., interfaces, BGP, routes) and apply filters, retrieving the results directly from your SuzieQ instance.
 
 ## Prerequisites
 
@@ -125,7 +129,7 @@ Integrate the server with Claude Desktop for seamless use:
 
 3. **Restart Claude Desktop:** Completely close and reopen Claude Desktop.
 
-4. **Verify:** Look for the MCP tool indicator (hammer icon 🔨) in Claude Desktop. Clicking it should show the `run_suzieq_show` tool.
+4. **Verify:** Look for the MCP tool indicator (hammer icon 🔨) in Claude Desktop. Clicking it should show both the `run_suzieq_show` and `run_suzieq_summarize` tools.
 
 ## Tool Usage (run_suzieq_show)
 
@@ -152,6 +156,33 @@ Show BGP neighbors for hostname 'spine01':
 Show 'up' interfaces in VRF 'default':
 ```json
 { "table": "interface", "filters": { "vrf": "default", "state": "up" } }
+```
+
+## Tool Usage (run_suzieq_summarize)
+
+```
+run_suzieq_summarize(table: str, filters: Optional[Dict[str, Any]] = None) -> str
+```
+
+* **table**: (String, Required) The SuzieQ table name to summarize (e.g., "device", "interface", "bgp").
+* **filters**: (Dictionary, Optional) Key-value pairs for filtering (e.g., `"hostname": "leaf01"`). Omit or use `{}` for no filters.
+* **Returns**: A JSON string with the summarized results or an error.
+
+### Example Invocations (Conceptual):
+
+Summarize all devices:
+```json
+{ "table": "device" }
+```
+
+Summarize BGP sessions by hostname 'spine01':
+```json
+{ "table": "bgp", "filters": { "hostname": "spine01" } }
+```
+
+Summarize interface states in VRF 'default':
+```json
+{ "table": "interface", "filters": { "vrf": "default" } }
 ```
 
 ## Troubleshooting

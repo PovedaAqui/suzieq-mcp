@@ -1,6 +1,5 @@
 # server.py
-# Implements the MCP server logic and the SuzieQ tool.
-# Updated to send API key as query parameter.
+# Implements the MCP server logic and SuzieQ tools.
 
 import httpx  # Using httpx for asynchronous HTTP requests
 import os
@@ -22,12 +21,13 @@ SUZIEQ_API_KEY = os.getenv("SUZIEQ_API_KEY", None) # Default to None if not set
 # Initialize FastMCP server with a name
 mcp = FastMCP("SuzieQ MCP Server")
 
-# --- SuzieQ API Interaction Helper ---
-async def query_suzieq_api(table: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+# --- SuzieQ API Interaction Helper (Generalized) ---
+async def _query_suzieq_api(verb: str, table: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Asynchronously queries the SuzieQ REST API 'show' endpoint.
+    Asynchronously queries the SuzieQ REST API for a given verb and table.
 
     Args:
+        verb: The SuzieQ verb to execute (e.g., 'show', 'summarize').
         table: The SuzieQ table name (e.g., 'device', 'bgp', 'interface').
         params: A dictionary of query parameters for filtering (e.g., {'hostname': 'leaf01', 'vrf': 'default'}).
 
@@ -40,11 +40,12 @@ async def query_suzieq_api(table: str, params: Optional[Dict[str, Any]] = None) 
         print(f"[ERROR] {error_msg}") # Log configuration error
         return {"error": error_msg}
 
-    # Construct the API URL for the 'show' verb
+    # Construct the API URL using the provided verb and table
     api_endpoint_clean = SUZIEQ_API_ENDPOINT.rstrip('/')
-    api_url = f"{api_endpoint_clean}/{table}/show"
+    # Assuming the API structure follows /{table}/{verb} pattern
+    api_url = f"{api_endpoint_clean}/{table}/{verb}"
 
-    # --- Authentication Change ---
+    # --- Authentication ---
     # Prepare parameters, adding the API key as 'access_token' query parameter
     query_params = params if params else {}
     query_params["access_token"] = SUZIEQ_API_KEY # Add key as query param
@@ -61,7 +62,7 @@ async def query_suzieq_api(table: str, params: Optional[Dict[str, Any]] = None) 
             response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
 
             if response.status_code == 204:
-                 return {"warning": "Received empty response (204 No Content) from SuzieQ API"}
+                return {"warning": f"Received empty response (204 No Content) from SuzieQ API for {verb} {table}"}
 
             content_type = response.headers.get('content-type', '')
             if 'application/json' in content_type:
@@ -79,15 +80,15 @@ async def query_suzieq_api(table: str, params: Optional[Dict[str, Any]] = None) 
             print(f"[ERROR] {error_detail}") # Debug print
             return {"error": error_detail}
         except json.JSONDecodeError as e:
-             error_detail = f"Failed to decode JSON response from SuzieQ API: {e}. Response text: {response.text}"
-             print(f"[ERROR] {error_detail}")
-             return {"error": error_detail}
+            error_detail = f"Failed to decode JSON response from SuzieQ API: {e}. Response text: {response.text}"
+            print(f"[ERROR] {error_detail}")
+            return {"error": error_detail}
         except Exception as e:
             error_detail = f"An unexpected error occurred: {str(e)}"
             print(f"[ERROR] {error_detail}") # Debug print
             return {"error": error_detail}
 
-# --- MCP Tool Definition ---
+# --- MCP Tool Definitions ---
 @mcp.tool()
 async def run_suzieq_show(table: str, filters: Optional[Dict[str, Any]] = None) -> str:
     """
@@ -105,11 +106,47 @@ async def run_suzieq_show(table: str, filters: Optional[Dict[str, Any]] = None) 
     """
     actual_filters = filters if isinstance(filters, dict) else None
 
-    result = await query_suzieq_api(table, params=actual_filters)
+    # Call the generalized helper function with verb='show'
+    result = await _query_suzieq_api(verb="show", table=table, params=actual_filters)
 
     try:
+        # Serialize the result dictionary to a JSON string
         return json.dumps(result, indent=2, ensure_ascii=False)
     except TypeError as e:
-        error_message = f"Error serializing SuzieQ response to JSON: {str(e)}"
+        error_message = f"Error serializing SuzieQ 'show' response to JSON: {str(e)}"
         print(f"[ERROR] {error_message}") # Debug print
         return json.dumps({"error": error_message})
+
+@mcp.tool()
+async def run_suzieq_summarize(table: str, filters: Optional[Dict[str, Any]] = None) -> str:
+    """
+    Runs a SuzieQ 'summarize' query via its REST API.
+
+    Args:
+        table: The name of the SuzieQ table to summarize (e.g., 'device', 'bgp', 'interface', 'route').
+        filters: An optional dictionary of filter parameters for the SuzieQ query
+                 (e.g., {"hostname": "leaf01", "vrf": "default"}).
+                 Keys should match SuzieQ filter names. Values can be strings or lists of strings.
+                 If no filters are needed, this can be None, null, or an empty dictionary.
+
+    Returns:
+        A JSON string representing the summarized result from the SuzieQ API,
+        or a JSON string with an error message.
+    """
+    actual_filters = filters if isinstance(filters, dict) else None
+
+    # Call the generalized helper function with verb='summarize'
+    result = await _query_suzieq_api(verb="summarize", table=table, params=actual_filters)
+
+    try:
+        # Serialize the result dictionary to a JSON string
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    except TypeError as e:
+        error_message = f"Error serializing SuzieQ 'summarize' response to JSON: {str(e)}"
+        print(f"[ERROR] {error_message}") # Debug print
+        return json.dumps({"error": error_message})
+
+# --- Main Execution (Example) ---
+# You would typically run this server using an ASGI server like uvicorn:
+# uvicorn server:mcp --reload
+# Or integrate it into a larger application framework.
