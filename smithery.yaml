@@ -1,0 +1,32 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - suzieqApiEndpoint
+      - suzieqApiKey
+    properties:
+      suzieqApiEndpoint:
+        type: string
+        description: The endpoint URL for the SuzieQ API (e.g.,
+          http://your-suzieq-host:8000/api/v2)
+      suzieqApiKey:
+        type: string
+        description: The API key for authenticating with the SuzieQ REST API
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'python',
+      args: ['main.py'],
+      env: {
+        SUZIEQ_API_ENDPOINT: config.suzieqApiEndpoint,
+        SUZIEQ_API_KEY: config.suzieqApiKey
+      }
+    })
+  exampleConfig:
+    suzieqApiEndpoint: http://example.com/api/v2
+    suzieqApiKey: example_key_123
