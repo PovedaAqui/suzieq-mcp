@@ -1,4 +1,5 @@
 # MCP Server for SuzieQ
+[![smithery badge](https://smithery.ai/badge/@PovedaAqui/suzieq-mcp)](https://smithery.ai/server/@PovedaAqui/suzieq-mcp)
 
 This project provides a Model Context Protocol (MCP) server that allows language models and other MCP clients to interact with a SuzieQ network observability instance via its REST API.
 
@@ -19,6 +20,15 @@ These tools enable clients (like Claude Desktop) to query various network state 
 
 ## Installation & Setup
 
+### Installing via Smithery
+
+To install suzieq-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@PovedaAqui/suzieq-mcp):
+
+```bash
+npx -y @smithery/cli install @PovedaAqui/suzieq-mcp --client claude
+```
+
+### Installing Manually
 1. **Get the Code:** Clone this repository or download the `main.py` and `server.py` files into a dedicated project directory.
 
 2. **Create Virtual Environment:** Navigate to your project directory in the terminal and create a virtual environment using `uv`:
