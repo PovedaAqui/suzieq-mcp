@@ -1,6 +1,10 @@
 # MCP Server for SuzieQ
 [![smithery badge](https://smithery.ai/badge/@PovedaAqui/suzieq-mcp)](https://smithery.ai/server/@PovedaAqui/suzieq-mcp)
 
+<a href="https://glama.ai/mcp/servers/@PovedaAqui/suzieq-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@PovedaAqui/suzieq-mcp/badge" />
+</a>
+
 This project provides a Model Context Protocol (MCP) server that allows language models and other MCP clients to interact with a SuzieQ network observability instance via its REST API.
 
 ## Overview
